@@ -19,8 +19,8 @@ for s in D["summary"]:
                      "en démo, la v1.08 garde l'or la nuit (bug corrigé par la v1.09).")
 
 # v1.09 = v1.08 + or ferme a 22h45 serveur. Resultats ORTEND et ORBREAK depuis le 30/03/2026 (l'or ferme a 23h00
-# serveur depuis) repris trade par trade du test d'Aurel robuste/or_fermeture_trades.csv (mode D = sortie 22h45).
-# ORIB garde le resultat du carnet (le test d'Aurel ne fait pas la sortie de moitie). Avant le 30/03 : rien ne change.
+# serveur depuis) repris trade par trade du test d'Aurele robuste/or_fermeture_trades.csv (mode D = sortie 22h45).
+# ORIB garde le resultat du carnet (le test d'Aurele ne fait pas la sortie de moitie). Avant le 30/03 : rien ne change.
 ORF = sys.argv[3] if len(sys.argv) > 3 else None
 if ORF:
     import csv, datetime as dt
@@ -44,9 +44,9 @@ if ORF:
     i107 = [s["id"] for s in D["summary"]].index("V107")
     D["summary"].insert(i107 + 1, {"id": "V109", "nom": "v1.09 (prête, pas en démo)",
         "desc": "v1.08 + l'or est fermé à 22h45 serveur (21h45 Paris) au lieu de passer la nuit. Même stratégie. "
-                f"Résultats or tendance et or cassure de canal depuis le 30/03/2026 repris du test d'Aurel ({rep} trades). "
+                f"Résultats or tendance et or cassure de canal depuis le 30/03/2026 repris du test d'Aurele ({rep} trades). "
                 "Le correctif ne rapporte presque rien : il supprime un risque de nuit jamais testé."})
-    print("v1.09 :", len(v109), "trades,", rep, "remplaces par le test d'Aurel")
+    print("v1.09 :", len(v109), "trades,", rep, "remplaces par le test d'Aurele")
 
 CSS = style + """
 .tabs{display:flex;gap:8px;margin:14px 0 4px;flex-wrap:wrap}
@@ -100,7 +100,7 @@ BODY = """<main>
 </section>
 
 <section id="demo" class="hidden">
-<div class="note">La démo tourne sur le PC d'Aurel. Le robot écrit chaque trade fermé dans <b>journal.csv</b> : dans MT5, Fichier → Ouvrir le dossier des données → <b>MQL5\\Files\\DayTrader\\journal.csv</b>. Dépose ce fichier ici, chaque semaine. Il est lu dans ton navigateur, il ne part nulle part. Comparaison avec le backtest de la <b>v1.07 / v1.08</b> (sans limite par jour : la démo applique déjà la sienne).</div>
+<div class="note">La démo tourne sur le PC d'Aurele. Le robot écrit chaque trade fermé dans <b>journal.csv</b> : dans MT5, Fichier → Ouvrir le dossier des données → <b>MQL5\\Files\\DayTrader\\journal.csv</b>. Dépose ce fichier ici, chaque semaine. Il est lu dans ton navigateur, il ne part nulle part. Comparaison avec le backtest de la <b>v1.07 / v1.08</b> (sans limite par jour : la démo applique déjà la sienne).</div>
 <label class="drop" id="drop">📂 <b>Clique ou dépose journal.csv ici</b><br><span class="mut small" id="fname">aucun fichier chargé</span><input type="file" id="file" accept=".csv,text/csv,text/plain"></label>
 <div class="row"><span class="small">Compter les trades depuis :</span><input type="datetime-local" id="since" value="2026-11-03T15:07"><span class="mut small">(heure de Paris ; 03/11/2026 15h07 = début de la v1.07)</span><button class="btn" id="clear">Oublier le fichier</button></div>
 <div id="dout"></div>
