@@ -6,10 +6,11 @@ Tous les résultats sont à 100 € de risque par trade, achat comme vente, en h
 Journal semaine par semaine : https://claude.ai/artifact/Uko76BPScEdCUGMhJoGHo9
 
 ## Ce qui tourne en démo (ne pas modifier)
-- DayTrader_MT5 **v1.01** sur DE40 M15 + TradeNotifier sur EURUSD H1, compte démo XXXXXXXX (masqué), lancé le 02/11/2026 vers 21h40.
-- 3 lignes : DAX 1re bougie (DAX1B), DAX zone de bruit (DAXBRUIT), or Initial Balance (ORIB), plus le filtre de tendance 20 jours.
-- Copie de référence : sans_yen/DayTrader_MT5_v101.mq5 et deploy/DayTrader_MT5.mq5.
-- Test 30/12/2024 → 02/11/2026 : 593 trades, 220 gagnants / 373 perdants, +11 553 €, 45 % de semaines gagnantes.
+- Depuis le 03/11/2026 vers 15h (Paris) : DayTrader_MT5 **v1.07** sur DE40 M15 (magics 26110700 à 26110704) + TradeNotifier sur EURUSD H1, compte démo XXXXXXXX (masqué). Passage lancé, à confirmer (voir l'entrée du 03/11 vers 15h en bas).
+- 5 lignes : DAX 1re bougie (DAX1B), DAX supertrend (DAXST), or Initial Balance (ORIB), or tendance (ORTEND), or cassure de canal 200 bougies (ORBREAK), plus le filtre de tendance 20 jours. Mises : 200 € à l'achat et à la vente, perte max 600 €/jour, coupe-circuit −20 %.
+- Copie de référence : sans_yen/DayTrader_MT5_v107.mq5 et sans_yen/deploy107/.
+- Historique : v1.01 du 02/11 21h40 au 03/11 2h47, puis v1.06 du 03/11 2h47 au 03/11 vers 15h.
+- Test de la v1.01 (30/12/2024 → 02/11/2026) : 593 trades, 220 gagnants / 373 perdants, +11 553 €, 45 % de semaines gagnantes.
 
 ## Candidats retenus pour le bot final (testés, pas déployés)
 | Date | Changement | Preuve | Statut |
@@ -165,3 +166,58 @@ Pour chaque ligne : P (2023 → 02/11/2025) et L (dernière année), en R ; frai
 - Réglages inchangés par rapport à la démo : risque 100 € à l'achat, 50 € à la vente, perte max 300 €/jour, coupe-circuit −20 %.
 - ⚠️ Le bouton Algo Trading du terminal était COUPÉ au moment du remplacement : aurele doit le rallumer, sinon aucun trade.
 - 03/11 vers 2h51 (Paris), choix d'aurele : risque 200 € à l'achat ET 200 € à la vente (InpRiskMoney=200, InpShortFactor=1.0). Limite de perte du jour montée à 600 € (3 × le risque, comme avant) pour ne pas couper le bot dès 2 pertes. v1.06 recompilée (0 erreur) et relancée sur DE40 M15 avec ces réglages par défaut. Algo Trading toujours COUPÉ à ce moment-là.
+
+## 03/11/2026 vers 14h20 (Paris) : test du dépôt TradIA (juanserracasero-debug/TradIA)
+- Le dépôt : bot Python de signaux pour BTC et ETH (Binance, données publiques), en simulation avec 10 € fictifs. Il tourne toutes les 15 min via GitHub Actions et envoie des emails (Mailjet). Score RSI 14 + croisement EMA 9/21 + MACD + Bollinger + volume, signal si score ≥ 3. Stop 0,75 %, objectif 1,5 %, clôture forcée à 22h45.
+- Leur propre simulation (08 au 23/09/2026) : 13 trades, 5 gagnants, 8 perdants, −2,4 % au total.
+- Nos marchés en M15, 2022-2026, 100 €/trade (robuste/tradia_test.py) : TOUT perd, sur les 7 marchés, en achat seul comme dans les 2 sens. Chiffres corrigés le 03/11 vers 14h25 (voir le bug plus bas) : DAX 2 sens −6 413 € (2 247 trades, −5,9 €/jour), or 2 sens −8 808 € (1 864 trades, −8,7 €/jour). Pas mieux que le hasard (p = 0,83 sur le DAX, 0,95 sur l'or).
+- Rien intégré au bot. Idée retenue à part : un message « bot vivant » (heartbeat), pour savoir si le PC ou MT5 s'est arrêté.
+- Trades : robuste/tradia_tous_trades.csv, et robuste/tradia_trades_oct2026.csv (DAX + or, depuis le 05/10).
+
+## 03/11/2026 vers 14h25 (Paris) : test du dépôt iannini-DayTrade (iannini25)
+- Le dépôt : application web brésilienne (React + Node) pour le Mini Índice WIN, avec signaux et code NTSL pour le logiciel Profit. Règle : achat si MM9 > MM21 ET clôture au-dessus du VWAP de la séance, vente dans le cas inverse. Stop 150 pts, objectif 250 pts, break-even à +100 pts, de 9h15 à 17h00 (heure de Brasília). Pas de résultats publiés.
+- Rejoué sur nos 7 marchés M15, 2022-2026, 100 €/trade (robuste/iannini_test.py), 4 variantes : fidèle (stop/objectif en % du prix), + filtre RSI, stop en ATR avec break-even, stop 0,3 ATR / objectif 0,45 ATR sans break-even. TOUT perd. Fidèle : DAX −21 532 € (8,8 trades/jour), or −86 041 €. Meilleure variante : DAX −1 449 €, or −1 879 €.
+- ⚠️ Bug trouvé et corrigé pendant ce test : après une sortie au stop ou à l'objectif EN COURS de bougie, le script ré-entrait à l'ouverture de cette même bougie, donc à un prix déjà passé. Avec ce bug, l'or donnait un faux +31 180 €. Corrigé dans iannini_test.py et tradia_test.py. À vérifier un jour dans nos anciens scripts de recherche à ré-entrée multiple dans la journée (les lignes de la v1.06 ne font qu'un trade par setup et par jour).
+- Rien intégré. Trades : robuste/iannini_tous_trades.csv et robuste/iannini_trades_oct2026.csv.
+
+## 03/11/2026 vers 14h35 (Paris) : test du skill Jakeschincariol/day-trader-skill
+- Le dépôt : 11 skills Claude pour le day trading d'actions US (scanner, news, entrée, sortie, « Time Machine », risque, taille, ordres via Alpaca en papier, alertes, résultats d'entreprises, trades du Congrès). Données Yahoo gratuites. Une seule stratégie testable : la cassure du range d'ouverture de 15 min (ORB). Stop au milieu du range, objectif 2R par défaut (1R dans leur exemple), sortie à 15:55 New York, achat seulement.
+- Rejoué sur 13 marchés M15 (4 indices dont le DAX + 9 actions US), 2022-2026, 100 €/trade, 4 variantes (achat ou 2 sens, 1R ou 2R), script robuste/dts_orb_test.py. Version fidèle (achat, 2R) : 8 942 trades, 3 643 gagnants, 5 299 perdants, −75 354 € (−61,9 €/jour, environ 7 trades/jour au total). DAX seul : −6 076 €. Sur 52 combinaisons, quelques-unes gagnent sur P et L (TSLA 2 sens 2R, AMD 1R), mais pas leurs réglages voisins : c'est ce que le hasard donne sur 52 essais.
+- Rappel utile : notre ligne « DAX 1re bougie » est un ORB, et elle ne gagne qu'avec le filtre de tendance 20 jours et les 2 correctifs. Sans eux, l'ORB brut perd, ce qui est cohérent.
+- Leur « Time Machine » (rejouer un setup sur son passé avant d'entrer) et le contrôle PASS/BLOCK existent déjà chez nous (tests contre le hasard, limites du robot). Rien intégré.
+- ⚠️ NFLX : les pertes géantes viennent peut-être de mon ajustement de la division par 10, à vérifier avant tout test sur NFLX.
+- Trades : robuste/dts_orb_tous_trades.csv, robuste/dts_orb_trades_oct2026.csv.
+
+## 03/11/2026 vers 14h40 (Paris) : test de alpacahq/Momentum-Trading-Example
+- Le dépôt : un exemple de code d'Alpaca (un seul script) pour petites actions US de 2 à 13 $ en bougies de 1 min. Achat entre 15 et 60 min après l'ouverture si : hausse de plus de 4 % depuis la veille, prix au-dessus du plus haut des 15 premières minutes, MACD positif et en hausse. Stop au dernier creux, objectif 3R, sortie si le MACD se retourne.
+- Rejoué en M15 sur 13 marchés (robuste/alpaca_momentum_test.py), achat seulement, 100 €/trade. Fidèle (seuil 4 %) : 275 trades en presque 5 ans, 111 gagnants, 164 perdants, +76 € (P −250 €, L +326 €). Avec un seuil adapté (0,5 × ATR jour) : 1 692 trades, −1 803 €. Autour de zéro : aucun avantage. Le vrai terrain de cette stratégie (petites actions en 1 min) n'existe pas chez notre broker.
+- À noter : AMD sort positif ici aussi (fidèle +505 € sur P, +154 € sur L ; p = 0,09), comme dans le test ORB. Ça fait deux fois. Ce n'est pas une preuve : AMD reste en observation, rien n'est intégré.
+- Trades : robuste/alpaca_tous_trades.csv.
+
+## 03/11/2026 vers 14h50 (Paris) : test de gianlucadetommaso/volatile
+- Le dépôt : outil Python (TensorFlow, Yahoo) abandonné depuis mai 2023. Chaque jour, il trace une tendance (polynôme de degré 2 sur un an de prix) et note chaque action de « très sous la tendance » à « très au-dessus ». 4 bots d'exemple achètent selon la note et revendent à +3/−10 %, +10/−3 %, +10/−20 % ou +20/−10 %. Ce sont des positions de plusieurs semaines : PAS du day trading.
+- Rejoué en journalier (robuste/volatile_test.py, tendance par moindres carrés à la place du modèle bayésien), 21 marchés, 100 € de risque par trade, financement de nuit compté. 2013-2021 : les 4 bots perdent (−197 €, −4 644 €, −1 663 €, −2 443 €). 2022-2026 : ils gagnent (+592 € à +5 357 €), mais des achats AU HASARD avec les mêmes sorties font autant par trade (p = 0,17 à 0,83). Le gain vient de la hausse des marchés (actions US, or), pas du modèle.
+- Rien intégré. Trades : robuste/volatile_tous_trades.csv.
+
+## 03/11/2026 vers 14h55 (Paris) : ⚠️ dépôt Blofin-Day-Trading/blofin-day-trading-bot = PIÈGE (logiciel malveillant)
+- Le code n'a pas été exécuté. Lu seulement, puis supprimé de la machine de test.
+- Le fichier caché .vscode/tasks.json se lance tout seul à l'ouverture du dossier dans VS Code ("runOn": "folderOpen", "task.allowAutomaticTasks": "on"). Il lit une adresse cachée en base64 dans .env.example (http://212.193.3.61:4873/, un serveur npm privé sur une simple adresse IP) et y installe le paquet « ioredis-om-typed », inconnu du registre officiel. C'est la méthode classique des voleurs de mots de passe et de portefeuilles crypto.
+- Le README (4 langues, belles images de gains) sert d'appât. Aucune stratégie à tester.
+- Règle : avant d'ouvrir un dépôt de « bot de trading » inconnu, vérifier .vscode/, package.json, les scripts d'installation et toute chaîne en base64.
+
+## 03/11/2026 vers 14h45 (Paris) : test de censix/INTRADAY-PartAB → v1.07 (cassure de canal sur l'or)
+- Le dépôt : chaîne d'exécution en R pour Interactive Brokers (2015), propre (aucun piège). 2 stratégies d'exemple prévues en bougies de 30-60 s : Bollinger (achat sous la bande basse, sortie à la moyenne) et cassure de canal (achat au-dessus du plus haut des N bougies, sortie au retour à la moyenne N ; N = 20 ou 200). Pas de stop, tout fermé le soir.
+- Rejoué en M15 sur 7 marchés (robuste/censix_test.py). Bollinger : perd partout. Cassure N = 20 : perd partout. Cassure N = 200 : gagne seulement sur l'OR.
+- Or, cassure 200 bougies, stop 0,6 ATR jour (100 € au stop) : 609 trades sur 2022-2026, +1 201 € sur 2022-24, +2 269 € sur 2025-26, pire baisse −1 193 €, p = 0,008 contre le hasard. 12 réglages voisins sur 12 (N 150-300, stop 0,45-0,75 ATR) gagnants sur 2022-25 ET sur la dernière année, encore gagnants avec frais doublés, à l'achat comme à la vente. Argent, DAX, indices US, forex : ne marche pas (ligne propre à l'or, à confirmer en démo).
+- Corrélation journalière avec la v1.06 : 0,06 (avec « or tendance » : −0,04). Les deux lignes tradent ensemble 14 jours sur 120 seulement.
+- **v1.07 = v1.06 + ligne ORBREAK** (sans_yen/DayTrader_MT5_v107.mq5), magics 26110700 à 26110704 (ORBREAK = 26110704). Réglages : InpOrBreakN = 200, InpOrBreakStopATR = 0,6. Entrées 10h00-22h45 serveur, tout fermé à 23h00 serveur. Compilée et mise en démo le 03/11 vers 15h (voir plus bas).
+- Dernière année, à 1 000 €/trade : v1.07 +96 870 € (v1.06 : +86 510 €), soit +10 360 €. 652 trades (2,5 par jour), 288 gagnants, 362 perdants, 9 mois gagnants sur 12, pire mois −15 740 € (v1.06 : −14 310 €). ORBREAK seule : 124 trades, 62 gagnants, 61 perdants, +10 360 €, pire mois −2 320 €. Cette année, ses ventes ont gagné (+12 290 €) et ses achats un peu perdu (−1 930 €).
+- Journal mensuel mis à jour (onglets v1.07 et « Or cassure de canal seule ») et republié. Sauvegarde : robuste/carnet_1an_avant_v107.json. Bandeau corrigé : la démo tourne en v1.06.
+
+## 03/11/2026 vers 15h (Paris) : la v1.07 prend la main sur la démo (demande explicite d'aurele : « la V7 en démo et sur le dépôt GitHub »)
+- Vérifié avant : aucune position ouverte sur les 4 lignes de la v1.06 (etat.txt à 14h54), entrées autorisées.
+- DayTrader_MT5_v107.mq5 déposé dans MQL5\Experts et compilé dans MetaEditor : 0 erreur, 0 avertissement.
+- Script MQL5\Scripts\PasseV107.mq5 compilé (0 erreur, 0 avertissement) avec le modèle Scripts\LanceDayTrader107.tpl. Il refuse un compte réel, refuse s'il reste une position ou un ordre des magics 26110300-302, 26110600-603 ou 26110700-704, remplace la v1.06 sur le graphique DE40 M15 et écrit le résultat dans MQL5\Files\passe_v107.txt.
+- Réglages repris de la démo v1.06 : 200 € à l'achat et à la vente (InpRiskMoney=200, InpShortFactor=1.0), perte max 600 €/jour, coupe-circuit −20 %. TradeNotifier n'est pas touché.
+- Le lancement du script se fait par aurele dans MT5 (Claude a seulement le droit de regarder MT5). Résultat à noter ici.
+- Fichiers : sans_yen/deploy107/ (robot, script, modèle de graphique).
