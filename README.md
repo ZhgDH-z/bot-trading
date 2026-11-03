@@ -8,6 +8,8 @@ Projet d'aurele : un robot de trading qui surveille les marchés, envoie une not
 
 - **Robot en démo : `sans_yen/DayTrader_MT5_v107.mq5` (v1.07)** sur DE40 (DAX) en 15 minutes, en démo depuis le 03/11/2026 à 15h07 (heure de Paris), à la place de la v1.06. Magic numbers 26110700 à 26110704.
 - Réglages de la démo : 200 € risqués par trade à l'achat et à la vente, perte max de 600 € par jour, coupe-circuit à −20 %.
+- **Prête sur la branche `ameliorations`, pas déployée : `sans_yen/DayTrader_MT5_v108.mq5` (v1.08)**. Même stratégie que la v1.07, deux correctifs de sécurité : protections sauvegardées (elles survivent à un redémarrage) et fermeture de l'or à 22h50 au lieu de 23h00 (le marché de l'or ferme à 23h00 serveur depuis fin mars 2026). Magic numbers 26110800 à 26110804. Détail dans `JOURNAL_DES_CHANGEMENTS.md`.
+- **Suivi de la démo : `suivi_demo/demo_vs_test.py`** compare le `journal.csv` du robot au backtest, semaine par semaine et ligne par ligne.
 - **Notifications : `notifications/TradeNotifier.mq5`** (sur un graphique EURUSD) envoie une alerte à chaque trade et un récap à 22h. Le robot lui passe les infos par des fichiers « outbox » (format dans `sans_yen/FORMAT_OUTBOX.md`).
 - Pas de paire en yen (choix d'aurele).
 - **Règle : on ne touche pas à la démo en cours.** Les améliorations se préparent à côté, se notent dans `JOURNAL_DES_CHANGEMENTS.md`, et ne remplacent la démo qu'avec l'accord d'aurele.
@@ -68,9 +70,13 @@ Les fichiers `.pkl` sont des résultats intermédiaires Python (pandas). Ne char
 2. Fichier → Ouvrir le dossier des données → `MQL5/Experts` : copie `sans_yen/DayTrader_MT5_v107.mq5` (et `notifications/TradeNotifier.mq5` si tu veux les alertes).
 3. Ouvre MetaEditor (F4), ouvre le fichier, **Compiler** (F7) : 0 erreur attendu. Piège : si un ancien onglet du même fichier est ouvert dans MetaEditor, ferme-le avant de remplacer le fichier, sinon il réécrit l'ancienne version.
 4. Glisse DayTrader sur un graphique **DE40 M15** (le nom du symbole peut changer selon le broker ; le robot trade aussi l'or XAUUSD depuis ce graphique), TradeNotifier sur n'importe quel graphique, et active **Algo Trading**.
-5. Les heures sont en heure serveur MetaQuotes-Demo (DAX à 10:00 serveur). Limite connue : quand les heures d'été US et Europe sont décalées (mi-mars → fin mars, dernière semaine d'octobre), le DAX est mal calé. À corriger avant le 8 mars 2027.
+5. Les heures sont en heure serveur MetaQuotes-Demo (DAX à 10:00 serveur). Le serveur suit l'heure d'été **européenne** (serveur = Paris + 1 h toute l'année) : le DAX est bien calé toute l'année. Pendant les semaines où seuls les États-Unis ont changé d'heure (mi-mars → fin mars, fin octobre → début novembre), ce sont les heures de New York qui glissent d'1 h (ouverture US à 15h30 serveur au lieu de 16h30). Recaler l'Initial Balance de l'or sur ces semaines n'a rien prouvé (40 trades) : non fait. Preuves : `robuste/ecart_horaire.py`.
+6. L'or ferme à 23h00 serveur depuis fin mars 2026 : la v1.07 ferme l'or à 23h00, trop tard (la position passe la nuit). Corrigé dans la v1.08.
 
 ## 6. Refaire les tests
+
+Suivi de la démo : `python suivi_demo/demo_vs_test.py CHEMIN\journal.csv --html rapport.html` (le fichier est dans `MQL5\Files\DayTrader\` du PC).
+
 
 Python 3 avec `pandas` et `numpy` (et `matplotlib` pour les graphiques). Les scripts se lancent depuis leur dossier, par exemple `python robuste/boucle.py`. Format des résultats demandé par aurele : 100 € par trade, résultats par semaine et par jour, avec le nombre de trades, de gagnants, de perdants et le gain ou la perte de chaque trade.
 
