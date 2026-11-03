@@ -6,10 +6,10 @@ Tous les résultats sont à 100 € de risque par trade, achat comme vente, en h
 Journal semaine par semaine : https://claude.ai/artifact/Uko76BPScEdCUGMhJoGHo9
 
 ## Ce qui tourne en démo (ne pas modifier)
-- Depuis le 03/11/2026 vers 15h (Paris) : DayTrader_MT5 **v1.07** sur DE40 M15 (magics 26110700 à 26110704) + TradeNotifier sur EURUSD H1, compte démo XXXXXXXX (masqué). Passage lancé, à confirmer (voir l'entrée du 03/11 vers 15h en bas).
+- Depuis le 03/11/2026 à 15h07 (Paris) : DayTrader_MT5 **v1.07** sur le graphique DE40 (magics 26110700 à 26110704) + TradeNotifier sur EURUSD H1, compte démo XXXXXXXX (masqué). Passage confirmé (voir l'entrée du 03/11 vers 15h en bas).
 - 5 lignes : DAX 1re bougie (DAX1B), DAX supertrend (DAXST), or Initial Balance (ORIB), or tendance (ORTEND), or cassure de canal 200 bougies (ORBREAK), plus le filtre de tendance 20 jours. Mises : 200 € à l'achat et à la vente, perte max 600 €/jour, coupe-circuit −20 %.
 - Copie de référence : sans_yen/DayTrader_MT5_v107.mq5 et sans_yen/deploy107/.
-- Historique : v1.01 du 02/11 21h40 au 03/11 2h47, puis v1.06 du 03/11 2h47 au 03/11 vers 15h.
+- Historique : v1.01 du 02/11 21h40 au 03/11 2h47, puis v1.06 du 03/11 2h47 au 03/11 15h07.
 - Test de la v1.01 (30/12/2024 → 02/11/2026) : 593 trades, 220 gagnants / 373 perdants, +11 553 €, 45 % de semaines gagnantes.
 
 ## Candidats retenus pour le bot final (testés, pas déployés)
@@ -219,5 +219,8 @@ Pour chaque ligne : P (2023 → 02/11/2025) et L (dernière année), en R ; frai
 - DayTrader_MT5_v107.mq5 déposé dans MQL5\Experts et compilé dans MetaEditor : 0 erreur, 0 avertissement.
 - Script MQL5\Scripts\PasseV107.mq5 compilé (0 erreur, 0 avertissement) avec le modèle Scripts\LanceDayTrader107.tpl. Il refuse un compte réel, refuse s'il reste une position ou un ordre des magics 26110300-302, 26110600-603 ou 26110700-704, remplace la v1.06 sur le graphique DE40 M15 et écrit le résultat dans MQL5\Files\passe_v107.txt.
 - Réglages repris de la démo v1.06 : 200 € à l'achat et à la vente (InpRiskMoney=200, InpShortFactor=1.0), perte max 600 €/jour, coupe-circuit −20 %. TradeNotifier n'est pas touché.
-- Le lancement du script se fait par aurele dans MT5 (Claude a seulement le droit de regarder MT5). Résultat à noter ici.
+- 15h07 (Paris) : aurele a lancé PasseV107 dans MT5 (Claude a seulement le droit de regarder MT5). Rapport passe_v107.txt : compte DEMO MetaQuotes-Demo, 0 position et 0 ordre ouverts, bouton Algo Trading ACTIVÉ, « OK : DayTrader_MT5_v107 (re)lancé sur DE40 » à la place de DayTrader_MT5_v106. TradeNotifier toujours sur EURUSD H1.
+- etat.txt mis à jour par la v1.07 à 15h07 : capital 100 000, entrées autorisées, 5 lignes listées (DAX1B, ORIB, ORTEND, DAXST, ORBREAK), aucune position.
+- À savoir : le graphique DE40 est en H1 (depuis le 03/11 vers 12h32). Sans effet sur les trades : le robot lit toujours les bougies M15 (et D1) en interne.
+- Le suivi des trades réels (suivi_demo/journal_demo.py) compte déjà les magics de la v1.07.
 - Fichiers : sans_yen/deploy107/ (robot, script, modèle de graphique).
