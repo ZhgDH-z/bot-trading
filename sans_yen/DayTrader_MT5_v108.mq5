@@ -57,28 +57,25 @@
 //|      repasse la moyenne des 200 bougies, stop 0,6 x ATR du jour,   |
 //|      tout ferme a 23h00 serveur. Entrees de 10h00 a 22h45 serveur. |
 //|      Sans filtre de tendance 20 jours (teste sans, comme DAXST).   |
-//|  v1.08 (03/11/2026, Melvin + Claude), AUCUN changement de strategie|
-//|   I  Protections sauvegardees (variables globales du terminal) :   |
-//|      capital du debut de journee, plus haut du capital et coupe-   |
-//|      circuit survivent a un redemarrage de MT5 ou du robot. Avant, |
-//|      un redemarrage remettait la perte max du jour et le -20 % a   |
-//|      zero. InpResetGuards = true pour repartir de zero (1 fois).   |
-//|   J  Fermeture de l'or : depuis fin mars 2026 l'or ferme a 23h00  |
-//|      serveur (derniere bougie 22h45, verifie dans les donnees :    |
-//|      robuste/ecart_horaire.py). La fermeture "23h" de la v1.07     |
-//|      ratait le marche : la position passait la nuit, alors que le  |
-//|      backtest sort au dernier prix du jour. Maintenant : or ferme a|
-//|      22h50 (ou 10 min avant la fin de seance du broker si plus    |
-//|      tot). ORBREAK : derniere entree sur la bougie de 22h30, comme |
-//|      avant. Aucun changement sur le DAX (bien cale toute l'annee : |
-//|      le serveur suit l'heure d'ete europeenne).                    |
+//|  v1.08 (03/11/2026), correctif "protections au redemarrage" :     |
+//|   I  La perte max du jour et le coupe-circuit survivent a un      |
+//|      redemarrage de MT5 (crash, mise a jour Windows, changement   |
+//|      de version). Au demarrage, le capital du debut de journee    |
+//|      est recalcule depuis l'historique des deals du jour, le plus |
+//|      haut du capital depuis tout l'historique du compte, et les   |
+//|      deux sont aussi sauvegardes en variables globales du         |
+//|      terminal (F3). On garde toujours la valeur la plus prudente. |
+//|      Le coupe-circuit reste verrouille apres un redemarrage :     |
+//|      pour le relancer, mettre InpResetKillSwitch = true une fois. |
+//|      Un trade deja pris aujourd'hui par la version d'avant        |
+//|      (magics InpPrevMagicBase) compte aussi : pas de doublon.     |
 //|                                                                    |
 //|  Securite : bloque sur compte REEL tant que InpAllowRealAccount    |
 //|  = false.                                                          |
 //+------------------------------------------------------------------+
 #property copyright "Bot trading - projet aurele"
 #property version   "1.08"
-#property description "Day trading sans yen v1.08 : v1.07 + protections sauvegardees + fermeture de l'or avant 23h00 serveur"
+#property description "Day trading sans yen v1.08 : 1re bougie DAX, supertrend DAX, Initial Balance or, or tendance, cassure de canal or, garde-fous persistants"
 
 #include <Trade/Trade.mqh>
 
@@ -91,6 +88,7 @@ input double InpRiskMoney        = 200.0; // Risque par trade a l'ACHAT (dans la
 input double InpShortFactor      = 1.0;   // Risque a la VENTE = ce facteur x InpRiskMoney (1 = 200 EUR comme l'achat, 0 = pas de vente)
 input double InpMaxDailyLossMoney= 600.0; // Plus aucune entree si la journee perd plus que ce montant (3 x le risque par trade)
 input double InpMaxDrawdownPct   = 20.0;  // Coupe-circuit : baisse max depuis le plus haut du capital (%)
+input bool   InpResetKillSwitch  = false; // v1.08 I : true UNE fois pour relancer le robot apres un coupe-circuit, puis remettre false
 input bool   InpTrendFilter      = true;  // Correctif tendance (ne pas desactiver : c'est lui qui corrige les pertes)
 input double InpDax1BMaxRiskATR  = 0.19;  // v1.02 : DAX 1re bougie, pas de trade si le stop depasse 0,19 x ATR du jour (0 = off)
 input bool   InpDax1BSkipMonday  = true;  // v1.02 : DAX 1re bougie, pas de trade le lundi
@@ -113,7 +111,7 @@ input int    InpEveningHHMM      = 2305;  // Heure serveur du rapport du soir (2
 
 input group "=== Divers ==="
 input ulong  InpMagicBase        = 26110800; // v1.08 : numeros magiques 26110800 a 26110804 (differents de la v1.07 en 261107xx)
-input bool   InpResetGuards      = false;    // v1.08 I : true = effacer les protections sauvegardees au demarrage (remettre a false ensuite)
+input ulong  InpPrevMagicBase    = 26110700; // v1.08 I : magics de la version d'avant, pour ne pas reprendre un trade deja joue aujourd'hui (0 = off)
 input int    InpSlippagePoints   = 30;
 input bool   InpAllowRealAccount = false;    // Autoriser un compte REEL (laisser false)
 
@@ -149,6 +147,8 @@ double   dayStartEquity = 0.0;
 long     currentDay     = -1;
 double   peakEquity     = 0.0;
 bool     killSwitch     = false;
+string   gvPrefix       = "";      // v1.08 I : prefixe des variables globales (DT_<compte>_)
+datetime lastGvFlush    = 0;
 datetime lastStatus     = 0;
 long     morningDone    = -1;
 long     eveningDone    = -1;
@@ -164,42 +164,6 @@ long DayKey(datetime t) { return (long)(t / 86400); }
 int  HHMM(datetime t) { MqlDateTime d; TimeToStruct(t, d); return d.hour * 100 + d.min; }
 datetime DayStart(datetime t) { return t - (t % 86400); }
 datetime AtHHMM(datetime day, int hhmm) { return DayStart(day) + (hhmm / 100) * 3600 + (hhmm % 100) * 60; }
-
-int MinToHHMM(int m) { return (m / 60) * 100 + m % 60; }
-int HHMMToMin(int x) { return (x / 100) * 60 + x % 100; }
-
-// Fin de la derniere seance de cotation du jour chez le broker (HHMM, 2400 = minuit), -1 si inconnue
-int SessionEndHHMM(const string sym, datetime t)
-  {
-   MqlDateTime s;
-   TimeToStruct(t, s);
-   int best = -1;
-   datetime from, to;
-   for(uint k = 0; k < 10; k++)
-     {
-      if(!SymbolInfoSessionTrade(sym, (ENUM_DAY_OF_WEEK)s.day_of_week, k, from, to))
-         break;
-      int secs = (int)((long)to % 86400);
-      int e = ((long)to >= 86400 && secs == 0) ? 1440 : secs / 60;
-      if(e > best) best = e;
-     }
-   return best < 0 ? -1 : MinToHHMM(best);
-  }
-
-// v1.08 J : heure serveur de fermeture de l'or. Avant : 23h00 fixe. Constat (donnees M15, robuste/ecart_horaire.py) :
-// depuis fin mars 2026 la derniere bougie de l'or est 22h45 tous les jours (et deja avant pendant les semaines
-// decalees) : le marche ferme a 23h00 serveur, la fermeture "23h" ratait donc le marche et la position passait la
-// nuit. Maintenant : 22h50, ou 10 min avant la fin de seance annoncee par le broker si elle est plus tot.
-int GoldCloseHHMM(const string sym, datetime t)
-  {
-   int base = 2250;
-   int se = SessionEndHHMM(sym, t);
-   if(se > 0 && HHMMToMin(se) >= 1200)         // on ignore une seance incoherente
-      base = MathMin(base, MinToHHMM(HHMMToMin(se) - 10));
-   return base;
-  }
-// Derniere bougie d'entree ORBREAK (exclue) : 15 min avant la fermeture (bougie de 22h30 = derniere entree, comme la v1.07)
-int GoldLastEntryHHMM(const string sym, datetime t) { return MinToHHMM(HHMMToMin(GoldCloseHHMM(sym, t)) - 15); }
 
 int StratCode(const string s)
   {
@@ -331,58 +295,13 @@ int OnInit()
    FolderCreate("DayTrader", 0);
    FolderCreate("DayTrader\\outbox", 0);
    trade.SetDeviationInPoints(InpSlippagePoints);
-   LoadGuards();
+   RestoreGuards();
    EventSetTimer(5);
    WriteStatus();
    return(INIT_SUCCEEDED);
   }
 
 void OnDeinit(const int reason) { SaveGuards(true); EventKillTimer(); }
-
-//+------------------------------------------------------------------+
-//| v1.08 I : protections sauvegardees dans les variables globales du  |
-//| terminal (fichier gvariables.dat de MT5, rien dans le depot).      |
-//| Une cle par compte et par version (magic de base).                 |
-//+------------------------------------------------------------------+
-string GvKey(const string what)
-  {
-   return StringFormat("DT%I64u_%I64d_%s", InpMagicBase, AccountInfoInteger(ACCOUNT_LOGIN), what);
-  }
-
-void SaveGuards(bool flush)
-  {
-   GlobalVariableSet(GvKey("jour"), (double)currentDay);
-   GlobalVariableSet(GvKey("capital_debut_jour"), dayStartEquity);
-   GlobalVariableSet(GvKey("plus_haut"), peakEquity);
-   GlobalVariableSet(GvKey("coupe_circuit"), killSwitch ? 1.0 : 0.0);
-   if(flush)
-      GlobalVariablesFlush();
-  }
-
-void LoadGuards()
-  {
-   double eq = AccountInfoDouble(ACCOUNT_EQUITY);
-   if(InpResetGuards)
-     {
-      GlobalVariablesDeleteAll(StringFormat("DT%I64u_%I64d_", InpMagicBase, AccountInfoInteger(ACCOUNT_LOGIN)));
-      Log("Protections sauvegardees effacees (InpResetGuards = true). Remets ce reglage a false.");
-     }
-   peakEquity = eq;
-   if(GlobalVariableCheck(GvKey("plus_haut")))
-     {
-      currentDay     = (long)GlobalVariableGet(GvKey("jour"));
-      dayStartEquity = GlobalVariableGet(GvKey("capital_debut_jour"));
-      peakEquity     = MathMax(eq, GlobalVariableGet(GvKey("plus_haut")));
-      killSwitch     = GlobalVariableGet(GvKey("coupe_circuit")) > 0.5;
-      Log(StringFormat("Protections reprises : debut de journee %.2f (jour %s), plus haut %.2f, coupe-circuit %s.",
-                       dayStartEquity, currentDay == DayKey(TimeCurrent()) ? "aujourd'hui" : "ancien",
-                       peakEquity, killSwitch ? "ACTIF" : "non"));
-     }
-   else
-      Log("Aucune protection sauvegardee : depart a zero.");
-   UpdateGuards();
-   SaveGuards(true);
-  }
 void OnTick()  { Run(); }
 void OnTimer() { Run(); }
 
@@ -400,24 +319,124 @@ void Run()
      }
    MarketReports();
    if(TimeCurrent() - lastStatus >= 300)
-     {
       WriteStatus();
-      SaveGuards(true);   // v1.08 I
-     }
   }
 
 void UpdateGuards()
   {
    double eq = AccountInfoDouble(ACCOUNT_EQUITY);
    long d = DayKey(TimeCurrent());
-   if(d != currentDay) { currentDay = d; dayStartEquity = eq; SaveGuards(true); }
-   if(eq > peakEquity) { peakEquity = eq; SaveGuards(false); }
+   bool changed = false;
+   if(d != currentDay) { currentDay = d; dayStartEquity = eq; changed = true; }
+   if(eq > peakEquity) { peakEquity = eq; changed = true; }
    if(!killSwitch && InpMaxDrawdownPct > 0 && eq < peakEquity * (1.0 - InpMaxDrawdownPct / 100.0))
      {
       killSwitch = true;
-      SaveGuards(true);
+      changed = true;
       Log(StringFormat("COUPE-CIRCUIT : baisse de plus de %.0f %% depuis le plus haut. Plus aucune entree.", InpMaxDrawdownPct));
      }
+   if(changed)
+      SaveGuards(killSwitch || TimeCurrent() - lastGvFlush >= 60);
+  }
+
+//+------------------------------------------------------------------+
+//| v1.08 I : protections persistantes                                 |
+//| Variables globales du terminal (F3 dans MT5) :                     |
+//|   DT_<compte>_day      jour (serveur) du capital de depart         |
+//|   DT_<compte>_daystart capital au debut de ce jour                 |
+//|   DT_<compte>_peak     plus haut du capital                        |
+//|   DT_<compte>_kill     1 = coupe-circuit declenche                 |
+//+------------------------------------------------------------------+
+void SaveGuards(bool flush)
+  {
+   if(MQLInfoInteger(MQL_TESTER) || gvPrefix == "")
+      return;
+   GlobalVariableSet(gvPrefix + "day", (double)currentDay);
+   GlobalVariableSet(gvPrefix + "daystart", dayStartEquity);
+   GlobalVariableSet(gvPrefix + "peak", peakEquity);
+   GlobalVariableSet(gvPrefix + "kill", killSwitch ? 1.0 : 0.0);
+   if(flush)
+     {
+      GlobalVariablesFlush();   // ecrit sur le disque tout de suite (survit a un crash)
+      lastGvFlush = TimeCurrent();
+     }
+  }
+
+bool IsTradeDeal(ulong d)
+  {
+   long t = HistoryDealGetInteger(d, DEAL_TYPE);
+   return t == DEAL_TYPE_BUY || t == DEAL_TYPE_SELL;
+  }
+
+double DealResult(ulong d)
+  {
+   return HistoryDealGetDouble(d, DEAL_PROFIT) + HistoryDealGetDouble(d, DEAL_SWAP)
+        + HistoryDealGetDouble(d, DEAL_COMMISSION) + HistoryDealGetDouble(d, DEAL_FEE);
+  }
+
+void RestoreGuards()
+  {
+   datetime now = TimeCurrent();
+   double eq = AccountInfoDouble(ACCOUNT_EQUITY), bal = AccountInfoDouble(ACCOUNT_BALANCE);
+   currentDay = DayKey(now);
+   gvPrefix = StringFormat("DT_%I64d_", AccountInfoInteger(ACCOUNT_LOGIN));
+
+   // 1) depuis l'historique du compte (marche meme si les variables globales sont perdues)
+   //    capital du debut de journee = solde actuel - resultat des trades fermes aujourd'hui
+   //    plus haut = plus haut du solde rejoue deal par deal sur tout l'historique
+   double realizedToday = 0.0, running = 0.0, histPeak = 0.0;
+   if(HistorySelect(0, now))
+     {
+      int n = HistoryDealsTotal();
+      for(int k = 0; k < n; k++)
+        {
+         ulong d = HistoryDealGetTicket(k);
+         if(d == 0)
+            continue;
+         double r = DealResult(d);
+         running += r;                        // inclut les depots / retraits
+         if(running > histPeak)
+            histPeak = running;
+         if(IsTradeDeal(d) && DayKey((datetime)HistoryDealGetInteger(d, DEAL_TIME)) == currentDay)
+            realizedToday += r;
+        }
+     }
+   else
+      Log("Historique indisponible au demarrage : protections reprises seulement depuis les variables globales.");
+   double histDayStart = bal - realizedToday;
+
+   // 2) depuis les variables globales sauvegardees
+   double gvDayStart = 0.0, gvPeak = 0.0;
+   bool gvKill = false;
+   if(GlobalVariableCheck(gvPrefix + "day") && (long)GlobalVariableGet(gvPrefix + "day") == currentDay)
+      gvDayStart = GlobalVariableGet(gvPrefix + "daystart");
+   if(GlobalVariableCheck(gvPrefix + "peak"))
+      gvPeak = GlobalVariableGet(gvPrefix + "peak");
+   if(GlobalVariableCheck(gvPrefix + "kill"))
+      gvKill = GlobalVariableGet(gvPrefix + "kill") > 0.5;
+
+   // 3) on garde la valeur la plus prudente (la plus haute = la protection se declenche plus tot)
+   dayStartEquity = MathMax(histDayStart, gvDayStart);
+   if(dayStartEquity <= 0)
+      dayStartEquity = eq;
+   peakEquity = MathMax(eq, MathMax(histPeak, gvPeak));
+   killSwitch = gvKill || (InpMaxDrawdownPct > 0 && eq < peakEquity * (1.0 - InpMaxDrawdownPct / 100.0));
+   if(InpResetKillSwitch && killSwitch)
+     {
+      killSwitch = false;
+      peakEquity = eq;          // nouveau depart : le plus haut repart du capital actuel
+      Log("Coupe-circuit REMIS A ZERO a la demande (InpResetKillSwitch). Remettre ce reglage a false.");
+     }
+   SaveGuards(true);
+
+   Log(StringFormat("Protections reprises : capital debut de journee %.2f (historique %.2f, sauvegarde %.2f), "
+                    "resultat du jour %+.2f / perte max %.2f, plus haut %.2f, coupe-circuit %s",
+                    dayStartEquity, histDayStart, gvDayStart, eq - dayStartEquity, InpMaxDailyLossMoney,
+                    peakEquity, killSwitch ? "DECLENCHE" : "non"));
+   if(killSwitch)
+      Log(StringFormat("COUPE-CIRCUIT toujours actif apres redemarrage (baisse de plus de %.0f %% depuis le plus haut). Plus aucune entree.", InpMaxDrawdownPct));
+   else if(InpMaxDailyLossMoney > 0 && eq < dayStartEquity - InpMaxDailyLossMoney)
+      Log("Perte max de la journee deja atteinte avant le redemarrage : plus d'entree aujourd'hui.");
   }
 
 bool EntriesAllowed()
@@ -590,7 +609,13 @@ bool TradedToday(const Slot &s)
    for(int k = HistoryDealsTotal() - 1; k >= 0; k--)
      {
       ulong d = HistoryDealGetTicket(k);
-      if(d > 0 && (ulong)HistoryDealGetInteger(d, DEAL_MAGIC) == s.magic && HistoryDealGetInteger(d, DEAL_ENTRY) == DEAL_ENTRY_IN)
+      if(d == 0 || HistoryDealGetInteger(d, DEAL_ENTRY) != DEAL_ENTRY_IN)
+         continue;
+      ulong m = (ulong)HistoryDealGetInteger(d, DEAL_MAGIC);
+      if(m == s.magic)
+         return true;
+      // v1.08 I : meme ligne jouee aujourd'hui par la version d'avant (meme rang dans la config)
+      if(InpPrevMagicBase > 0 && m == InpPrevMagicBase + (s.magic - InpMagicBase) && HistoryDealGetString(d, DEAL_SYMBOL) == s.sym)
          return true;
      }
    return false;
@@ -835,7 +860,7 @@ void ProcessOrib(int i)
      {
       if(CountPending(slots[i]) > 0)
          DeletePending(slots[i]);
-      if(x >= GoldCloseHHMM(sym, now) || (PositionSelectByTicket(pos) && DayKey((datetime)PositionGetInteger(POSITION_TIME)) != today))
+      if(x >= 2300 || (PositionSelectByTicket(pos) && DayKey((datetime)PositionGetInteger(POSITION_TIME)) != today))
          ClosePos(slots[i], pos, "fin de journee 23h");
       else
          OribHalf(i, pos);
@@ -958,7 +983,7 @@ void ProcessOrTend(int i)
    ulong pos = FindPosition(slots[i]);
    if(pos > 0)
      {
-      if(x >= GoldCloseHHMM(sym, now) || (PositionSelectByTicket(pos) && DayKey((datetime)PositionGetInteger(POSITION_TIME)) != today))
+      if(x >= 2300 || (PositionSelectByTicket(pos) && DayKey((datetime)PositionGetInteger(POSITION_TIME)) != today))
          ClosePos(slots[i], pos, "fin de journee 23h");
       return;
      }
@@ -1081,7 +1106,7 @@ void ProcessOrBreak(int i)
    int x = HHMM(now);
    long today = DayKey(now);
    ulong pos = FindPosition(slots[i]);
-   if(pos > 0 && (x >= GoldCloseHHMM(sym, now) || (PositionSelectByTicket(pos) && DayKey((datetime)PositionGetInteger(POSITION_TIME)) != today)))
+   if(pos > 0 && (x >= 2300 || (PositionSelectByTicket(pos) && DayKey((datetime)PositionGetInteger(POSITION_TIME)) != today)))
      {
       ClosePos(slots[i], pos, "fin de journee 23h");
       return;
@@ -1109,7 +1134,7 @@ void ProcessOrBreak(int i)
       return;
      }
    int h1 = HHMM(r[1].time), h0 = HHMM(r[0].time);
-   if(DayKey(r[1].time) != DayKey(r[0].time) || h1 < 1000 || h1 >= GoldLastEntryHHMM(sym, now) || h0 < 1000 || h0 >= GoldLastEntryHHMM(sym, now))
+   if(DayKey(r[1].time) != DayKey(r[0].time) || h1 < 1000 || h1 >= 2245 || h0 < 1000 || h0 >= 2245)
       return;
    int sig = c1 > hi ? 1 : (c1 < lo ? -1 : 0);
    if(sig == 0 || !SideAllowedNoTrend(sig))

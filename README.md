@@ -70,13 +70,11 @@ Les fichiers `.pkl` sont des résultats intermédiaires Python (pandas). Ne char
 2. Fichier → Ouvrir le dossier des données → `MQL5/Experts` : copie `sans_yen/DayTrader_MT5_v107.mq5` (et `notifications/TradeNotifier.mq5` si tu veux les alertes).
 3. Ouvre MetaEditor (F4), ouvre le fichier, **Compiler** (F7) : 0 erreur attendu. Piège : si un ancien onglet du même fichier est ouvert dans MetaEditor, ferme-le avant de remplacer le fichier, sinon il réécrit l'ancienne version.
 4. Glisse DayTrader sur un graphique **DE40 M15** (le nom du symbole peut changer selon le broker ; le robot trade aussi l'or XAUUSD depuis ce graphique), TradeNotifier sur n'importe quel graphique, et active **Algo Trading**.
-5. Les heures sont en heure serveur MetaQuotes-Demo (DAX à 10:00 serveur). Le serveur suit l'heure d'été **européenne** (serveur = Paris + 1 h toute l'année) : le DAX est bien calé toute l'année. Pendant les semaines où seuls les États-Unis ont changé d'heure (mi-mars → fin mars, fin octobre → début novembre), ce sont les heures de New York qui glissent d'1 h (ouverture US à 15h30 serveur au lieu de 16h30). Recaler l'Initial Balance de l'or sur ces semaines n'a rien prouvé (40 trades) : non fait. Preuves : `robuste/ecart_horaire.py`.
-6. L'or ferme à 23h00 serveur depuis fin mars 2026 : la v1.07 ferme l'or à 23h00, trop tard (la position passe la nuit). Corrigé dans la v1.08.
+5. Les heures sont en heure serveur MetaQuotes-Demo (DAX à 10:00 serveur). Le serveur suit l'heure d'été **européenne** (serveur = Paris + 1 h toute l'année) : le DAX est bien calé toute l'année. Pendant les semaines où seuls les États-Unis ont changé d'heure (mi-mars → fin mars, fin octobre → début novembre), ce sont les heures de New York qui glissent d'1 h (ouverture US à 15h30 serveur au lieu de 16h30). Recaler l'Initial Balance de l'or sur ces semaines n'a rien prouvé (40 trades) : non fait. Preuves : `robuste/ecart_horaire.py` (Melvin).
 
 ## 6. Refaire les tests
 
-Suivi de la démo : `python suivi_demo/demo_vs_test.py CHEMIN\journal.csv --html rapport.html` (le fichier est dans `MQL5\Files\DayTrader\` du PC).
-
+Suivi de la démo contre le backtest : `python suivi_demo/demo_vs_test.py CHEMIN\journal.csv --html rapport.html` (le fichier est dans `MQL5\Files\DayTrader\` du PC). Rapport par semaine et par ligne, à 100 €/trade, et liste des positions qui ont passé la nuit (Melvin).
 
 Python 3 avec `pandas` et `numpy` (et `matplotlib` pour les graphiques). Les scripts se lancent depuis leur dossier, par exemple `python robuste/boucle.py`. Format des résultats demandé par aurele : 100 € par trade, résultats par semaine et par jour, avec le nombre de trades, de gagnants, de perdants et le gain ou la perte de chaque trade.
 
