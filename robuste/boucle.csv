@@ -1,0 +1,10 @@
+etape,trades,trades_par_jour,total,2022,2023,2024,2025,2026,pire_baisse,gagnants_pct
+bot de la demo (v1.01),1477,1.22,14826,3982,-2385,1106,10156,1967,-6797,34
+correctif 1 : DAX 1re bougie sans 'stop fort',1296,1.07,18574,4080,-774,1950,11044,2275,-5278,35
+correctif 2 : DAX 1re bougie sans 'lundi',1232,1.01,21010,4825,523,2416,10294,2953,-3779,36
+correctif 3 : DAX zone de bruit sans 'marche calme',876,0.72,22313,4491,1294,3262,10099,3165,-2254,38
+correctif 4 : Or Initial Balance sans 'elan sur 5 jours faible',777,0.64,23158,4795,1152,3489,10256,3466,-2373,38
+correctif 5 : DAX 1re bougie sans 'prix deja parti dans le sens du trade faible',677,0.56,23904,5528,1044,3549,11042,2742,-1916,41
+correctif 6 : DAX zone de bruit sans 'mardi',628,0.52,24649,5528,1133,3746,11754,2488,-1827,42
+correctif 7 : DAX zone de bruit sans 'ventes',531,0.44,25251,5528,1609,3947,11316,2852,-1518,45
+correctif 8 : Or Initial Balance sans 'prix deja parti dans le sens du trade faible',465,0.38,25590,5461,2074,4402,11218,2435,-1518,44

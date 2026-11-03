@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.ex5
+*.log
+.env
+*secret*
+*password*

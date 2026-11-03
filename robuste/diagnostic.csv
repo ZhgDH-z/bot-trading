@@ -1,0 +1,63 @@
+ligne,verdict,correctif,avant_2022_24,apres_2022_24,avant_2025_26,apres_2025_26,hasard_2025_26,trades_B
+ORB15dir_DAX:DE40,corrigee sur 2022-24,sans 'ecart a la moyenne faible' + sans 'prix deja parti faible',-2362,11236,5825,7167,2531.0,417
+LONDON15:USDCHF,corrigee sur 2022-24,sans 'vendredi' + sans 'lundi',-3509,522,1514,1635,939.0,369
+CHASSE_US:USTECH100M,corrigee sur 2022-24,sans 'stop faible' + sans 'elan 5 jours faible',-1867,4066,-2497,1407,-1132.0,238
+LONDON15:XAUUSD,corrigee sur 2022-24,sans 'prix deja parti faible' + sans 'mercredi',-457,2194,99,846,38.0,270
+LONDON15_1R:XAUUSD,corrigee sur 2022-24,sans 'contre la tendance 20 j' + sans 'marche calme',-941,1397,758,752,348.0,270
+VWAP_FX:USDCAD,corrigee sur 2022-24,sans 'achats',-889,501,-703,726,-334.0,91
+IB_OR:XAUUSD,corrigee sur 2022-24,sans 'prix deja parti faible' + sans 'elan 5 jours faible',-1126,1499,1619,719,773.0,266
+LONDON15:XAGUSD,amelioree mais toujours perdante,sans 'marche normal',-7226,-1617,669,669,384.0,288
+BRUIT_DAX:DE40,corrigee sur 2022-24,sans 'ecart a la moyenne faible' + sans 'mercredi',-3726,1998,2439,494,1386.0,462
+LONDON15_1R:XAGUSD,amelioree mais toujours perdante,sans 'marche normal',-9535,-2936,-191,485,-137.0,288
+ORB30_DAX:DE40,gagnante : gardee telle quelle,,5798,5798,416,416,,408
+VWAP_FX:EURUSD,gagnante : gardee telle quelle,,177,177,260,260,,61
+LONDON15_1R:USDCHF,amelioree mais toujours perdante,sans 'contre la tendance 20 j' + sans 'vendredi',-4406,-575,-777,252,-309.0,369
+IB_INDICES:USTECH100M,corrigee sur 2022-24,sans 'contre la tendance 20 j' + sans 'marche agite',-745,1720,-356,190,-67.0,257
+LONDON15:EURUSD,corrigee sur 2022-24,sans 'contre la tendance 20 j' + sans 'elan 5 jours faible',-322,2379,-912,67,-364.0,365
+ORB15dir_US_10R:US500,corrigee sur 2022-24,sans 'ventes' + sans 'mercredi',-7242,1730,-1205,48,-426.0,424
+VWAP_FX:AUDUSD,amelioree mais toujours perdante,sans 'stop fort',-1139,-497,26,8,-4.0,70
+LONDON15_1R:USDCAD,amelioree mais toujours perdante,sans 'marche calme' + sans 'mardi',-5468,-526,-3044,-65,-1560.0,348
+CHASSE_ASIE:XAGUSD,amelioree mais toujours perdante,sans 'entree a 10h serveur' + sans 'mercredi',-27518,-3913,-6814,-115,-3258.0,201
+VWAP_FX:USDCHF,corrigee sur 2022-24,sans 'elan 5 jours faible',-646,310,99,-119,55.0,74
+ORB30_US:US30,gagnante : gardee telle quelle,,821,821,-155,-155,,419
+VWAP_DAX:DE40,amelioree mais toujours perdante,sans 'elan 5 jours faible',-1723,-751,-294,-209,-199.0,42
+VWAP_FX:XAUUSD,corrigee sur 2022-24,sans 'entree a 16h serveur',-805,285,-303,-241,-209.0,89
+VWAP_FX:GBPUSD,corrigee sur 2022-24,sans 'ecart a la moyenne fort',-167,465,-305,-345,-232.0,67
+LONDON15:USDCAD,amelioree mais toujours perdante,sans 'marche calme' + sans 'mardi',-7464,-1401,-3321,-427,-1587.0,348
+VWAP_FX:XAGUSD,amelioree mais toujours perdante,sans 'achats',-1763,-508,-595,-584,-289.0,74
+BRUIT_US:US30,gagnante : gardee telle quelle,,3436,3436,-622,-622,,380
+LONDON15:GBPUSD,corrigee sur 2022-24,sans 'prix deja parti faible' + sans 'vendredi',-1753,1241,1445,-643,797.0,390
+LONDON15_1R:AUDUSD,corrigee sur 2022-24,sans 'prix deja parti faible' + sans 'elan 5 jours faible',-1600,251,-1364,-669,-562.0,293
+ORB15dir_US:US30,corrigee sur 2022-24,sans 'mercredi' + sans 'ventes',-231,6879,-1332,-770,-792.0,424
+ORB15dir_US_10R:US30,corrigee sur 2022-24,sans 'mercredi' + sans 'ventes',-1539,4691,-1404,-789,-554.0,424
+VWAP_FX:EURCHF,gagnante : gardee telle quelle,,152,152,-833,-833,,64
+CHASSE_ASIE:AUDUSD,corrigee sur 2022-24,sans 'avec la tendance 20 j' + sans 'mercredi',-11598,51,-9692,-884,-3944.0,204
+LONDON15_1R:EURUSD,corrigee sur 2022-24,sans 'achats',-2105,95,-779,-940,-336.0,365
+ORB30_US:US500,gagnante : gardee telle quelle,,5167,5167,-1056,-1056,,425
+LONDON15:EURGBP,corrigee sur 2022-24,sans 'achats',-7209,149,-2807,-1219,-1134.0,364
+VWAP_TENDANCE:DE40,amelioree mais toujours perdante,sans 'ventes' + sans 'entree a 19h serveur',-12319,-750,-6468,-1243,-2927.0,1888
+CHASSE_ASIE:GBPUSD,corrigee sur 2022-24,sans 'achats' + sans 'lundi',-5535,5267,-4882,-1277,-2004.0,286
+CHASSE_US:US30,corrigee sur 2022-24,sans 'marche calme' + sans 'mercredi',-1703,6124,-3542,-1551,-2295.0,241
+LONDON15_1R:EURGBP,amelioree mais toujours perdante,sans 'achats',-7570,-881,-4110,-1728,-1630.0,364
+CHASSE_ASIE:XAUUSD,corrigee sur 2022-24,sans 'ventes',-7233,175,-4151,-1748,-1934.0,191
+LONDON15_1R:EURCHF,corrigee sur 2022-24,sans 'prix deja parti faible' + sans 'elan 5 jours faible',-2315,856,-5875,-1842,-2906.0,350
+LONDON15:AUDUSD,corrigee sur 2022-24,sans 'achats' + sans 'entree a 12h serveur',-2510,99,-807,-1846,-300.0,293
+IB_INDICES:US500,corrigee sur 2022-24,sans 'mercredi' + sans 'lundi',-534,3015,-1489,-1950,-904.0,277
+LONDON15_1R:GBPUSD,corrigee sur 2022-24,sans 'prix deja parti faible' + sans 'vendredi',-2478,537,-397,-2039,-186.0,390
+IB_INDICES:US30,amelioree mais toujours perdante,sans 'ventes',-3345,-184,-2189,-2086,-1046.0,259
+ORB15dir_US:US500,corrigee sur 2022-24,sans 'marche normal' + sans 'mercredi',-5053,3775,-2072,-2390,-991.0,424
+CHASSE_ASIE:EURCHF,amelioree mais toujours perdante,sans 'marche calme' + sans 'achats',-14721,-672,-15090,-2546,-5645.0,246
+LONDON15:EURCHF,amelioree mais toujours perdante,sans 'contre la tendance 20 j' + sans 'elan 5 jours faible',-4122,-518,-6559,-2652,-2912.0,350
+CHASSE_US:US500,gagnante : gardee telle quelle,,1186,1186,-2877,-2877,,208
+ORB30_US:USTECH100M,gagnante : gardee telle quelle,,6653,6653,-3016,-3016,,421
+BRUIT_US:USTECH100M,gagnante : gardee telle quelle,,4955,4955,-3119,-3119,,374
+BRUIT_US:US500,gagnante : gardee telle quelle,,6434,6434,-3409,-3409,,386
+VWAP_TENDANCE:USTECH100M,corrigee sur 2022-24,sans 'contre la tendance 20 j' + sans 'lundi',-355,5779,-8263,-3558,-3582.0,2012
+CHASSE_ASIE:USDCAD,amelioree mais toujours perdante,sans 'stop faible' + sans 'entree a 11h serveur',-15913,-1472,-17415,-3778,-7864.0,254
+VWAP_TENDANCE:US30,corrigee sur 2022-24,sans 'prix deja parti fort' + sans 'ecart a la moyenne faible',-4698,5599,-7999,-3975,-3620.0,1966
+ORB15dir_US_10R:USTECH100M,gagnante : gardee telle quelle,,6232,6232,-4045,-4045,,431
+CHASSE_ASIE:USDCHF,corrigee sur 2022-24,sans 'avec la tendance 20 j' + sans 'mardi',-9966,1310,-8590,-4476,-3127.0,262
+ORB15dir_US:USTECH100M,gagnante : gardee telle quelle,,9832,9832,-4785,-4785,,431
+CHASSE_ASIE:EURUSD,amelioree mais toujours perdante,sans 'ventes',-7552,-1669,-7133,-5967,-3746.0,271
+CHASSE_ASIE:EURGBP,amelioree mais toujours perdante,sans 'stop faible' + sans 'elan 5 jours fort',-23374,-3923,-24951,-6216,-10388.0,282
+VWAP_TENDANCE:US500,corrigee sur 2022-24,sans 'ecart a la moyenne faible' + sans 'mercredi',-8812,4586,-12136,-7375,-7281.0,1919

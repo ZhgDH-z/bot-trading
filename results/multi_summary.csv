@@ -1,0 +1,6 @@
+,trades,jours_avec_trade_pct,R_moyen,profit_factor,R_moyen_2012_2017,R_moyen_2018_2022,rendement_total_pct,rendement_annuel_pct,pire_baisse_pct,annees_negatives
+"S1 croisement MM (video, achat+vente)",8898.0,94.0,-0.027,0.93,-0.036,-0.016,-76.0,-14.1,-81.2,8.0
+"S1b croisement MM (video, achat seul)",6489.0,91.0,-0.022,0.95,-0.021,-0.022,-59.0,-9.1,-74.7,7.0
+S2 cassure de la veille,24107.0,99.0,-0.093,0.81,-0.105,-0.079,-100.0,-71.5,-100.0,11.0
+S3 cassure de Londres,27174.0,99.0,-0.047,0.91,-0.032,-0.064,-100.0,-52.5,-100.0,9.0
+S4 tendance Donchian 20/10,1317.0,38.0,-0.063,0.87,-0.011,-0.125,-36.0,-4.7,-41.4,9.0

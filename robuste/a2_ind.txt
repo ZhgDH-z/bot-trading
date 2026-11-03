@@ -1,0 +1,15 @@
+DE40_XAUUSD_US500_USTECH100M_US30_XAGUSD
+             version  trades  par_jour  taux_gain  eur_23_24  eur_25_26  eur_total  eur_par_trade  sem_gagnantes
+0  attendu >= 0.00 R    5596      5.64       41.7      -4053       1031      -3022           -0.5             41
+1  attendu >= 0.05 R    5338      5.38       39.1      -6841       1988      -4853           -0.9             41
+2  attendu >= 0.10 R    4839      4.88       36.9      -6496       6850        354            0.1             47
+3  attendu >= 0.15 R    4161      4.19       34.8      -3313      -2855      -6169           -1.5             44
+4  attendu >= 0.20 R    3474      3.53       33.3      -8492       5628      -2864           -0.8             45
+          size   mean
+sortie               
+S015_FIN  7470  0.010
+S03_FIN   2805 -0.020
+S03_T05    284  0.004
+S03_T10    978 -0.052
+S05_FIN    973  0.028
+S05_T05    134  0.001
