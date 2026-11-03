@@ -1,5 +1,6 @@
-"""Construit site/journal_melvin.html (le site de Melvin) a partir de robuste/journal_mensuel.html : on garde le style et les
-donnees du backtest, on remplace la page et le script. Usage : python site/build_journal.py robuste/journal_mensuel.html site/journal_melvin.html"""
+"""Construit site/journal_melvin.html (le site de Melvin) a partir de robuste/journal_mensuel.html : meme style et memes
+donnees de backtest, page et script remplaces, + v1.09 reprise du test d'Aurel.
+Usage : python site/build_journal.py robuste/journal_mensuel.html site/journal_melvin.html robuste/or_fermeture_trades.csv"""
 import json, sys
 
 src, out = sys.argv[1], sys.argv[2]
@@ -8,13 +9,44 @@ style = h[h.index("<style>") + 7:h.index("</style>")]
 i = h.index("const D=") + 8
 D, _ = json.JSONDecoder().raw_decode(h, i)
 
-# v1.08 = meme strategie que la v1.07 (seuls 2 correctifs de securite) : meme backtest
+# v1.08 = meme strategie que la v1.07 (protections sauvegardees) : meme backtest
 for s in D["summary"]:
     if s["id"] == "V107":
-        s["nom"] = "v1.07 / v1.08 (en démo)"
+        s["nom"] = "v1.07 / v1.08 (v1.08 en démo)"
         s["desc"] = ("DAX 1re bougie, DAX supertrend, or Initial Balance, or tendance, or cassure de canal 200 bougies, "
-                     "filtre de tendance 20 jours. La v1.08 a la même stratégie : elle ajoute seulement des protections "
-                     "qui survivent à un redémarrage et ferme l'or à 22h50 (le marché ferme à 23h00).")
+                     "filtre de tendance 20 jours. La v1.08 (en démo depuis le 03/11/2026 16h17) a la même stratégie, avec "
+                     "des protections qui survivent à un redémarrage. Dans ce test, l'or sort au dernier prix du jour ; "
+                     "en démo, la v1.08 garde l'or la nuit (bug corrigé par la v1.09).")
+
+# v1.09 = v1.08 + or ferme a 22h45 serveur. Resultats ORTEND et ORBREAK depuis le 30/03/2026 (l'or ferme a 23h00
+# serveur depuis) repris trade par trade du test d'Aurel robuste/or_fermeture_trades.csv (mode D = sortie 22h45).
+# ORIB garde le resultat du carnet (le test d'Aurel ne fait pas la sortie de moitie). Avant le 30/03 : rien ne change.
+ORF = sys.argv[3] if len(sys.argv) > 3 else None
+if ORF:
+    import csv, datetime as dt
+    NM = {"Or tendance du jour": "ORTEND", "Or cassure de canal 200 bougies": "ORBREAK"}
+    par = lambda s: (dt.datetime.strptime(s[:16], "%Y-%m-%d %H:%M") - dt.timedelta(hours=1)).strftime("%Y-%m-%d %H:%M")
+    fd = {}
+    for r in csv.DictReader(open(ORF, encoding="utf-8")):
+        if r["mode"] == "D":
+            fd[(r["ligne"], par(r["entree"]), int(r["sens"]))] = (float(r["eur"]), par(r["sortie"]))
+    v109, rep = [], 0
+    for t in D["trades"]:
+        if t[0] != "V107":
+            continue
+        u = ["V109"] + t[1:]
+        k = (NM.get(t[1]), t[3], t[2])
+        if t[3] >= "2026-03-30" and k in fd:
+            u[5], u[4] = round(fd[k][0], 2), fd[k][1]
+            rep += 1
+        v109.append(u)
+    D["trades"] += v109
+    i107 = [s["id"] for s in D["summary"]].index("V107")
+    D["summary"].insert(i107 + 1, {"id": "V109", "nom": "v1.09 (prête, pas en démo)",
+        "desc": "v1.08 + l'or est fermé à 22h45 serveur (21h45 Paris) au lieu de passer la nuit. Même stratégie. "
+                f"Résultats or tendance et or cassure de canal depuis le 30/03/2026 repris du test d'Aurel ({rep} trades). "
+                "Le correctif ne rapporte presque rien : il supprime un risque de nuit jamais testé."})
+    print("v1.09 :", len(v109), "trades,", rep, "remplaces par le test d'Aurel")
 
 CSS = style + """
 .tabs{display:flex;gap:8px;margin:14px 0 4px;flex-wrap:wrap}
@@ -44,6 +76,7 @@ BODY = """<main>
 <div class="note"><b><span id="mise">1 000</span> € risqués par trade</b> (achat comme vente) : c'est ce que tu perds si le stop est touché. Un gagnant peut rapporter plus.</div>
 <div class="chips" id="fx"><button class="chip" data-f="1">100 €</button><button class="chip" data-f="2">200 €</button><button class="chip" data-f="10">1 000 €</button><button class="chip" data-f="3">1 trade sur 3 à 1 000 €, les autres à 200 €</button></div>
 <label class="amt" for="amt">✏️ <b>Ton montant :</b> <input id="amt" type="text" inputmode="decimal" autocomplete="off" aria-label="Montant risqué par trade en euros"> € risqués par trade <span class="mut small">(tout se recalcule)</span></label>
+<label class="amt" for="lim">🛑 <b>Perte max par jour :</b> <input id="lim" type="text" inputmode="decimal" autocomplete="off" aria-label="Perte maximale par jour en euros"> € <span class="mut small">(comme le robot : une fois la journée à −600 €, plus aucun nouveau trade ce jour-là ; 0 = sans limite)</span></label>
 
 <section id="bt">
 <div class="note warn">⚠️ <b>À lire avant de croire les chiffres.</b> Ce sont des tests sur le passé, et les stratégies ont été choisies en regardant cette même année : la réalité sera plus faible. Le seul vrai juge, c'est l'onglet <b>Démo réelle</b>, sur plusieurs semaines.</div>
@@ -51,6 +84,7 @@ BODY = """<main>
 <p class="desc" id="desc"></p>
 <h2>Sur l'année</h2>
 <div class="grid" id="tot"></div>
+<div class="note" id="limnote"></div>
 <div class="curve"><div class="mut small" id="ctitle">Évolution du résultat, trade après trade (rouge : baisse depuis le plus haut)</div><div id="curve"></div></div>
 <h2>Meilleures et pires périodes</h2>
 <div class="two"><div class="list" id="best"></div><div class="list" id="worst"></div></div>
@@ -66,7 +100,7 @@ BODY = """<main>
 </section>
 
 <section id="demo" class="hidden">
-<div class="note">La démo tourne sur le PC d'Aurel. Le robot écrit chaque trade fermé dans <b>journal.csv</b> : dans MT5, Fichier → Ouvrir le dossier des données → <b>MQL5\\Files\\DayTrader\\journal.csv</b>. Dépose ce fichier ici, chaque semaine. Il est lu dans ton navigateur, il ne part nulle part. Comparaison avec le backtest de la <b>v1.07 / v1.08</b>.</div>
+<div class="note">La démo tourne sur le PC d'Aurel. Le robot écrit chaque trade fermé dans <b>journal.csv</b> : dans MT5, Fichier → Ouvrir le dossier des données → <b>MQL5\\Files\\DayTrader\\journal.csv</b>. Dépose ce fichier ici, chaque semaine. Il est lu dans ton navigateur, il ne part nulle part. Comparaison avec le backtest de la <b>v1.07 / v1.08</b> (sans limite par jour : la démo applique déjà la sienne).</div>
 <label class="drop" id="drop">📂 <b>Clique ou dépose journal.csv ici</b><br><span class="mut small" id="fname">aucun fichier chargé</span><input type="file" id="file" accept=".csv,text/csv,text/plain"></label>
 <div class="row"><span class="small">Compter les trades depuis :</span><input type="datetime-local" id="since" value="2026-11-03T15:07"><span class="mut small">(heure de Paris ; 03/11/2026 15h07 = début de la v1.07)</span><button class="btn" id="clear">Oublier le fichier</button></div>
 <div id="dout"></div>
@@ -86,11 +120,21 @@ const ml=m=>MOIS[+m.slice(5,7)-1]+' '+m.slice(0,4)+(m==='2026-11'?' (2 jours)':'
 const wl=w=>'sem. du '+w.slice(8,10)+'/'+w.slice(5,7)+'/'+w.slice(0,4);
 const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
 let TAB=LS.get('jm_tab')==='demo'?'demo':'bt';
-let strat=LS.get('jm_strat');if(!D.summary.some(x=>x.id===strat))strat=D.summary[0].id;
+let strat=LS.get('jm_strat');if(!D.summary.some(x=>x.id===strat))strat=D.summary.some(x=>x.id==='V107')?'V107':D.summary[0].id;
 let VIEW=LS.get('jm_view')==='sem'?'sem':'mois',mi=null;
-let RISK=1000,TIERS=false;{const r=parseFloat(LS.get('jm_risk'));if(r>0)RISK=r;TIERS=LS.get('jm_tiers')==='1'}
-function save(){LS.set('jm_risk',String(RISK));LS.set('jm_tiers',TIERS?'1':'0')}
-let byS={};function build(){byS={};for(const t of D.trades){(byS[t[0]]=byS[t[0]]||[]).push(t.slice())}for(const k in byS){byS[k].sort((a,b)=>a[3]<b[3]?-1:1);byS[k].forEach((u,i)=>{const m=TIERS?(i%3===0?10:2):RISK/100;u[5]=u[5]*m;u.push(m*100)})}}
+let RISK=200,TIERS=false,LIMIT=600;{const r=parseFloat(LS.get('jm_risk'));if(r>0)RISK=r;TIERS=LS.get('jm_tiers')==='1';const l=parseFloat(LS.get('jm_lim'));if(l>=0)LIMIT=l}
+function save(){LS.set('jm_risk',String(RISK));LS.set('jm_tiers',TIERS?'1':'0');LS.set('jm_lim',String(LIMIT))}
+/* byS : trades gardes apres la limite du jour ; RAW : tous les trades (sans limite) ; BLK : trades bloques */
+let byS={},RAW={},BLK={};
+function build(){RAW={};for(const t of D.trades){(RAW[t[0]]=RAW[t[0]]||[]).push(t.slice())}
+ byS={};BLK={};
+ for(const k in RAW){const L=RAW[k];L.sort((a,b)=>a[3]<b[3]?-1:1);L.forEach((u,i)=>{const m=TIERS?(i%3===0?10:2):RISK/100;u[5]=u[5]*m;u.push(m*100)});
+  if(!(LIMIT>0)){byS[k]=L;BLK[k]=[];continue}
+  // comme le robot : un nouveau trade est refuse si les trades du jour deja fermes perdent LIMIT ou plus
+  const keep=[],blk=[],day={};
+  for(const t of L){const d=t[3].slice(0,10);const done=(day[d]||[]).filter(x=>x[4]&&x[4]<=t[3]).reduce((a,x)=>a+x[5],0);
+   if(done<=-LIMIT)blk.push(t);else{keep.push(t);(day[d]=day[d]||[]).push(t)}}
+  byS[k]=keep;BLK[k]=blk}}
 build();
 function st(l){let n=l.length,g=0,p=0,e=0;for(const t of l){e+=t[5];if(t[5]>0)g++;else if(t[5]<0)p++}return{n,g,p,e,days:new Set(l.map(t=>t[3].slice(0,10))).size}}
 function run(arr,f){let best=0,cur=0;arr.forEach(x=>{if(f(x)){cur++;if(cur>best)best=cur}else cur=0});return best}
@@ -110,6 +154,7 @@ function renderTop(){
  document.querySelectorAll('#fx .chip').forEach(b=>{const f=b.dataset.f;b.setAttribute('aria-pressed',f==='3'?TIERS:(!TIERS&&RISK===100*f))});
  $('mise').textContent=TIERS?'1 000 € (1 trade sur 3) ou 200':RISK.toLocaleString('fr-FR',{maximumFractionDigits:2});
  const ai=$('amt');if(document.activeElement!==ai)ai.value=TIERS?'':String(RISK).replace('.',',');ai.placeholder=TIERS?'ex. 500':'';
+ const li=$('lim');if(document.activeElement!==li)li.value=String(LIMIT).replace('.',',');
 }
 
 function render(){
@@ -126,6 +171,11 @@ function render(){
  const cap=Math.ceil(-dd/0.2/100)*100;
  $('tot').innerHTML=k('trades',a.n)+k('trades par jour de bourse',(a.n/256).toFixed(1).replace('.',','))+k('gagnants / perdants',a.g+' / '+a.p)+k('taux de gain',a.n?Math.round(100*a.g/a.n)+' %':'—')+k('résultat sur l\'année',fe(a.e),cl(a.e))+k('moyenne par trade',a.n?fe(a.e/a.n):'—',cl(a.e))+k('mois gagnants',full.filter(x=>x.s.e>0).length+' sur '+full.length)+k('moyenne par mois',fe(full.reduce((s,x)=>s+x.s.e,0)/full.length),cl(a.e))
   +k('pire baisse depuis un plus haut',fe(dd),'neg')+k('capital minimum pour que cette baisse reste sous 20 %',TIERS?'—':fn(cap))+k('semaines gagnantes',WK.filter(x=>x.s.e>0).length+' sur '+WK.length);
+ const B=BLK[strat]||[],R=RAW[strat]||[];
+ if(LIMIT>0){const rawE=R.reduce((x,t)=>x+t[5],0),bd=new Set(B.map(t=>t[3].slice(0,10))).size,dd2=drawdown(R.map(t=>t[5])).dd;
+  $('limnote').className='note '+(B.length?'warn':'ok');
+  $('limnote').innerHTML=B.length?`🛑 <b>Limite de ${fn(LIMIT)} par jour :</b> elle a coupé <b>${bd} jour(s)</b> et bloqué <b>${B.length} trade(s)</b> (ces trades auraient fait ${fe(B.reduce((x,t)=>x+t[5],0))}). Résultat avec la limite : <b class="${cl(a.e)}">${fe(a.e)}</b> ; sans limite : ${fe(rawE)}. Pire baisse avec la limite : ${fe(dd)} ; sans : ${fe(dd2)}.<br><span class="small">⚠️ Cet effet est mesuré sur la seule dernière année. Sur 2023-2025, des limites de 2 à 4 trades perdus par jour ont été testées : aucune n'aide sur les deux périodes. La limite sert à <b>protéger le compte</b>, pas à gagner plus.</span>`:`✅ <b>Limite de ${fn(LIMIT)} par jour :</b> elle n'a jamais été atteinte sur l'année avec ${TIERS?'cette mise':fn(RISK)+' par trade'}. Le résultat ne change pas.`}
+ else{$('limnote').className='note';$('limnote').innerHTML='Pas de limite de perte par jour (0).'}
  const lab=[];let lastM='';T.forEach((t,i)=>{const m=t[3].slice(0,7);if(m!==lastM&&+m.slice(5,7)%3===2){lab.push([i,['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][+m.slice(5,7)-1]+' '+m.slice(0,4)])}lastM=m});
  $('curve').innerHTML=curve(cum,pks,lab);
  const P=VIEW==='sem'?WK:MM, Pfull=VIEW==='sem'?WK:full;
@@ -218,6 +268,8 @@ $('months').onclick=e=>{const r=e.target.closest('tr[data-i]');if(!r)return;mi=+
 $('fx').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const f=b.dataset.f;if(f==='3')TIERS=true;else{TIERS=false;RISK=100*f}save();build();render()};
 $('amt').addEventListener('input',e=>{const v=parseFloat(e.target.value.replace(/\s/g,'').replace(',','.'));if(!(v>0)||v>10000000)return;RISK=v;TIERS=false;save();build();render()});
 $('amt').addEventListener('blur',()=>render());
+$('lim').addEventListener('input',e=>{const t=e.target.value.replace(/\s/g,'').replace(',','.');const v=t===''?0:parseFloat(t);if(!(v>=0)||v>10000000)return;LIMIT=v;save();build();render()});
+$('lim').addEventListener('blur',()=>render());
 $('file').addEventListener('change',e=>loadFile(e.target.files[0]));
 const dz=$('drop');['dragenter','dragover'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.add('over')}));
 ['dragleave','drop'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.remove('over')}));

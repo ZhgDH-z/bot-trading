@@ -8,8 +8,6 @@ Projet d'aurele : un robot de trading qui surveille les marchés, envoie une not
 
 - **Robot en démo : `sans_yen/DayTrader_MT5_v107.mq5` (v1.07)** sur DE40 (DAX) en 15 minutes, en démo depuis le 03/11/2026 à 15h07 (heure de Paris), à la place de la v1.06. Magic numbers 26110700 à 26110704.
 - Réglages de la démo : 200 € risqués par trade à l'achat et à la vente, perte max de 600 € par jour, coupe-circuit à −20 %.
-- **Prête sur la branche `ameliorations`, pas déployée : `sans_yen/DayTrader_MT5_v108.mq5` (v1.08)**. Même stratégie que la v1.07, deux correctifs de sécurité : protections sauvegardées (elles survivent à un redémarrage) et fermeture de l'or à 22h50 au lieu de 23h00 (le marché de l'or ferme à 23h00 serveur depuis fin mars 2026). Magic numbers 26110800 à 26110804. Détail dans `JOURNAL_DES_CHANGEMENTS.md`.
-- **Suivi de la démo : `suivi_demo/demo_vs_test.py`** compare le `journal.csv` du robot au backtest, semaine par semaine et ligne par ligne.
 - **Notifications : `notifications/TradeNotifier.mq5`** (sur un graphique EURUSD) envoie une alerte à chaque trade et un récap à 22h. Le robot lui passe les infos par des fichiers « outbox » (format dans `sans_yen/FORMAT_OUTBOX.md`).
 - Pas de paire en yen (choix d'aurele).
 - **Règle : on ne touche pas à la démo en cours.** Les améliorations se préparent à côté, se notent dans `JOURNAL_DES_CHANGEMENTS.md`, et ne remplacent la démo qu'avec l'accord d'aurele.
