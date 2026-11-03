@@ -251,3 +251,10 @@ Pour chaque ligne : P (2023 → 02/11/2025) et L (dernière année), en R ; frai
 - Correctif J (sans_yen/DayTrader_MT5_v109.mq5) : l'or est fermé à 22h45 serveur (InpGoldCloseHHMM), ou 15 min avant la fin de séance annoncée par le broker si elle est plus tôt ; l'heure utilisée est TimeTradeServer (avance même sans prix) ; pas d'entrée ORBREAK après cette heure. Magics 26110900 à 26110904. Le DAX n'est pas touché (fermé à 18h30, marché encore ouvert).
 - Fichiers : sans_yen/deploy109/ (robot, PasseV109 qui refuse s'il reste un trade des magics 2611(03|06|07|08)xx, modèle). Le suivi démo compte les magics 261109xx.
 - NON compilée, NON déployée, NON poussée : attend le oui d'aurele.
+
+## 03/11/2026 vers 16h35 (Paris) : apports de Melvin (branche `ameliorations`, commit 8b4323a), avec l'accord d'aurele
+Aucun changement de robot. Revue : sécurité OK (pas de tâche .vscode, script d'installation, téléchargement ni WebRequest).
+- Repris : `suivi_demo/demo_vs_test.py` (démo contre backtest, semaine par semaine et ligne par ligne, testé sur un faux journal de 63 trades), `robuste/ecart_horaire.py` (heures serveur et heure d'été, relancé : mêmes résultats), correction du README : le serveur suit l'heure d'été européenne, le DAX est bien calé, ce sont les heures de New York qui glissent.
+- Non repris : son `DayTrader_MT5_v108.mq5`. Il partait de la v1.07 avec les mêmes magics que la v1.08 de main ; ses deux correctifs (protections sauvegardées, or fermé avant 23h00) sont déjà dans la v1.08 et la v1.09. Ne pas fusionner la branche `ameliorations` telle quelle : elle écraserait la v1.08.
+- Test indépendant du bug de l'or (estimation, 174 trades or v1.07 sortis en fin de journée depuis le 30/03/2026, 100 €/trade) : fermés avant 23h00 +4 471 € (107 G / 66 P), gardés la nuit +4 558 € (107 G / 65 P). Écart +87 € en 7 mois, pire nuit −124 € (week-end). La nuit ne rapporte rien de prouvé : le correctif v1.09 est juste.
+- Règle proposée par Melvin, à valider par aurele : ne plus changer la stratégie de la démo pendant 8 à 12 semaines, seuls les correctifs de sécurité passent.
