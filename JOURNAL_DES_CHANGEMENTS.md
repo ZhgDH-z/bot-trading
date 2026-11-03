@@ -224,3 +224,16 @@ Pour chaque ligne : P (2023 → 02/11/2025) et L (dernière année), en R ; frai
 - À savoir : le graphique DE40 est en H1 (depuis le 03/11 vers 12h32). Sans effet sur les trades : le robot lit toujours les bougies M15 (et D1) en interne.
 - Le suivi des trades réels (suivi_demo/journal_demo.py) compte déjà les magics de la v1.07.
 - Fichiers : sans_yen/deploy107/ (robot, script, modèle de graphique).
+
+## 03/11/2026 vers 16h10 (Paris) : v1.08, les protections survivent à un redémarrage de MT5 (bug signalé par aurele)
+- Le bug (v1.01 à v1.07) : la perte max du jour (600 €) et le coupe-circuit (−20 % depuis le plus haut) étaient gardés seulement en mémoire. À chaque redémarrage de MT5 (crash, mise à jour Windows, changement de version), le capital de départ du jour était repris au capital du moment et le plus haut aussi. Exemple : −500 € à 14h, redémarrage, le robot pouvait encore perdre 600 € de plus. Arrivé 3 fois le 03/11.
+- Correctif I (sans_yen/DayTrader_MT5_v108.mq5) :
+  - Au démarrage, le capital du début de journée est recalculé depuis l'historique du compte : solde actuel moins le résultat des trades fermés aujourd'hui (profit, swap, commission, frais ; dépôts exclus). Le plus haut est recalculé en rejouant le solde deal par deal sur tout l'historique.
+  - Les deux valeurs et l'état du coupe-circuit sont aussi sauvegardés en variables globales du terminal (touche F3 dans MT5 : DT_<compte>_day, _daystart, _peak, _kill), écrites sur le disque à chaque déclenchement, au moins une fois par minute quand elles changent, et à l'arrêt du robot.
+  - On garde toujours la valeur la plus prudente des deux (la plus haute). Le coupe-circuit reste verrouillé après un redémarrage. Pour le relancer volontairement : InpResetKillSwitch = true une fois (le plus haut repart alors du capital actuel), puis remettre false.
+  - Au démarrage, le journal Experts affiche « Protections reprises : capital début de journée …, résultat du jour …, plus haut …, coupe-circuit … ».
+  - Bonus : une ligne qui a déjà joué son trade aujourd'hui sous la version d'avant (InpPrevMagicBase = 26110700, même rang, même symbole) ne le rejoue pas après le changement de version.
+- Nouveaux magics : 26110800 à 26110804. Aucune règle de trading changée : mêmes entrées, mêmes sorties, mêmes mises (200 € à l'achat et à la vente), donc pas de nouveau backtest à faire, les résultats de la v1.07 restent valables.
+- Limite connue : un trade ouvert la veille et encore ouvert au début du jour (impossible normalement, tout est fermé à 18h30 ou 23h serveur) ne serait pas compté dans le recalcul depuis l'historique ; la sauvegarde en variable globale le couvre.
+- Pas encore compilé (pas de compilateur MQL5 ici) : à compiler dans MetaEditor avant la mise en démo. Fichiers prêts : sans_yen/deploy108/ (robot, script PasseV108.mq5 qui refuse s'il reste un trade des magics 2611(03|06|07)xx, modèle LanceDayTrader108.tpl). Le suivi (suivi_demo/journal_demo.py) compte déjà les magics 261108xx.
+- NON déployé : attend le oui d'aurele.
